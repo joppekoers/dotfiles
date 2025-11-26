@@ -33,6 +33,7 @@ forceln "$PWD/.zshrc" ~
 forceln "$PWD/.tmux.conf" ~
 forceln "$PWD/.ssh/config" ~/.ssh
 forceln "$PWD/gitconfig/.gitconfig" ~
+forceln "$PWD/pgcli/config" ~/.config/pgcli
 
 [ ! -f .zsh_history ] && touch .zsh_history
 forceln "$PWD/.zsh_history" ~

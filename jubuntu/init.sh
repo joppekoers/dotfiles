@@ -13,16 +13,15 @@ cd /root
 
 
 # ========================= Install dependencies =========================
-apt-get update
-
-apt-get install -y -qq \
+apt-get update && \
+	apt-get install -y -qq \
     curl \
     jq \
     git \
     libicu-dev \
 	unzip \
 	gnupg \
-	htop \
+	pgcli \
 	locales
 
 # Install doctl, for authenticating with the k8s cluster
