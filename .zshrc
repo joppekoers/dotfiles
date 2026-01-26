@@ -30,6 +30,7 @@ function kube_ps1_wrapped() {
 		kube_ps1
 	fi
 }
+alias k='kubectl'
 
 # PROMPT="%(?:%{$fg_bold[green]%}➜ :%{$fg_bold[red]%}➜ )" # default
 prompt_color=red
@@ -248,6 +249,7 @@ _gm_complete() {
   fi
 }
 compdef _gm_complete gm
+
 function gr { # git rebase on top of latest version of branch
 	if [ $# -ne 1 ]; then
 		echo "Usage: gr <branch>"
@@ -481,6 +483,10 @@ if which deno > /dev/null; then
 	autoload -Uz compinit
 	compinit
 fi;
+
+# Terraform
+autoload -U +X bashcompinit && bashcompinit
+complete -o nospace -C /opt/homebrew/bin/terraform terraform
 
 # Set .zsh_history max lines
 HISTSIZE=10000000
