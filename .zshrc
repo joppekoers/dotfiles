@@ -26,8 +26,16 @@ KUBE_PS1_PREFIX=
 KUBE_PS1_SUFFIX=
 # KUBE_PS1_NS_ENABLE=false
 function kube_ps1_wrapped() {
-	if [[ "$PWD" == *"celebratix"* ]]; then
-		kube_ps1
+	if [[ "$PWD" == *"celebratix/infra"* ]]; then
+		local k8s_cluser_name=$(kube_ps1)
+		if [[ "$k8s_cluser_name" == *"production"* ]]; then
+			echo "%{$fg[red]%}production%{$reset_color%}"
+		elif [[ "$k8s_cluser_name" == *"staging"* ]]; then
+			echo "%{$fg[red]%}staging%{$reset_color%}"
+		elif [[ "$k8s_cluser_name" == *"dev"* ]]; then
+			echo "%{$fg[red]%}dev%{$reset_color%}"
+		fi
+
 	fi
 }
 alias k='kubectl'
@@ -43,9 +51,10 @@ server*)
 	prompt_color='red'
 	;;
 esac
-PROMPT='%{$fg[${prompt_color}]%}%n@%m%}%{$fg[white]%}:%{$fg_bold[cyan]%}'
+PROMPT=''
+# PROMPT+='%{$fg[${prompt_color}]%}%n@%m%}%{$fg[white]%}:%{$fg_bold[cyan]%}' # username and device name
 PROMPT+='%{$fg[cyan]%}${(%):-%~}%{$reset_color%} $(git_prompt_info)$(kube_ps1_wrapped)
-%(?:%{$fg_bold[green]%}➜ :%{$fg_bold[red]%}➜ )%{$reset_color%}' # MAYBE use $ insead of ➜
+%(?:%{$fg_bold[green]%}$ :%{$fg_bold[red]%}$ )%{$reset_color%}'
 
 ZSH_THEME_GIT_PROMPT_PREFIX="%{$fg_bold[blue]%}git:(%{$fg[red]%}"
 ZSH_THEME_GIT_PROMPT_SUFFIX="%{$reset_color%} "
