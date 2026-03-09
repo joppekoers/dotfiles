@@ -31,16 +31,17 @@ function kube_ps1_wrapped() {
 	fi
 }
 alias k='kubectl'
+export CLOUDSDK_PYTHON_SITEPACKAGES=1
 
 # PROMPT="%(?:%{$fg_bold[green]%}➜ :%{$fg_bold[red]%}➜ )" # default
 prompt_color=red
 case $(hostname -s) in
 laptop)
-    prompt_color='green'
-    ;;
+	prompt_color='green'
+	;;
 server*)
-    prompt_color='red'
-    ;;
+	prompt_color='red'
+	;;
 esac
 PROMPT='%{$fg[${prompt_color}]%}%n@%m%}%{$fg[white]%}:%{$fg_bold[cyan]%}'
 PROMPT+='%{$fg[cyan]%}${(%):-%~}%{$reset_color%} $(git_prompt_info)$(kube_ps1_wrapped)
@@ -138,9 +139,10 @@ alias z='zshz 2>&1'
 # GIT aliases and functions
 # alias gf='git fetch --all --prune'
 alias gcm='git commit -m'
+alias g='git'
 function gch {
 	if [ $# -eq 0 ]; then
-		branch="$(git reflog | grep checkout | grep -o 'to .*$' | grep -o ' .*$' |  perl -ne 'print if ++$k{$_}==1' | fzf | tr -d '[:space:]')"
+		branch="$(git reflog | grep checkout | grep -o 'to .*$' | grep -o ' .*$' |	perl -ne 'print if ++$k{$_}==1' | fzf | tr -d '[:space:]')"
 		git checkout "$branch"
 		return
 	fi
@@ -216,7 +218,7 @@ function gclean() { # git clean all untracked files and staged files
 	log_and_run git stash drop -q
 }
 function gchh { # git checkout history
-	checkout_history=$(git reflog | grep checkout | grep -o 'to .*$' | grep -o ' .*$' |  perl -ne 'print if ++$k{$_}==1' | tail -r | tail -n 15)
+	checkout_history=$(git reflog | grep checkout | grep -o 'to .*$' | grep -o ' .*$' |	perl -ne 'print if ++$k{$_}==1' | tail -r | tail -n 15)
 	if [ $# -ne 1 ]; then
 		echo "$checkout_history" | nl -w2 -s' '
 		return
@@ -243,10 +245,10 @@ function gm { # git merge latest version of branch into current branch
 	log_and_run git merge $1 --no-ff --no-edit
 }
 _gm_complete() {
-  _arguments '1: :->branch' && return 0
-  if [[ $state == branch ]]; then
-    compadd $(git for-each-ref --format='%(refname:short)' refs/heads/)
-  fi
+	_arguments '1: :->branch' && return 0
+	if [[ $state == branch ]]; then
+		compadd $(git for-each-ref --format='%(refname:short)' refs/heads/)
+	fi
 }
 compdef _gm_complete gm
 
@@ -268,57 +270,57 @@ function gr { # git rebase on top of latest version of branch
 	log_and_run git rebase $1
 }
 _gr_complete() {
-  _arguments '1: :->branch' && return 0
-  if [[ $state == branch ]]; then
+	_arguments '1: :->branch' && return 0
+	if [[ $state == branch ]]; then
 	compadd $(git for-each-ref --format='%(refname:short)' refs/heads/)
-  fi
+	fi
 }
 compdef _gr_complete gr
 
 function gl { # git log with pretty format
-	git log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(cyan)%ad %ar%C(reset)%C(auto)%d%C(reset)%n''          %C(white)%s%C(reset) %C(dim white)- %an%C(reset)' --date=format:'%a, %d %b %H:%M'
+	git log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(cyan)%ad %ar%C(reset)%C(auto)%d%C(reset)%n''					%C(white)%s%C(reset) %C(dim white)- %an%C(reset)' --date=format:'%a, %d %b %H:%M'
 }
 
 
 ghlogs() {
-  # Fetch the latest GitHub runs
-  local runs
-  runs=$(gh run list --limit 10 --json databaseId,status,displayTitle -q '.[] | "\(.databaseId) \(.status) \(.displayTitle)"' | grep in_progress)
+	# Fetch the latest GitHub runs
+	local runs
+	runs=$(gh run list --limit 10 --json databaseId,status,displayTitle -q '.[] | "\(.databaseId) \(.status) \(.displayTitle)"' | grep in_progress)
 
-  if [[ -z "$runs" ]]; then
-    echo "No recent GitHub Actions runs found."
-    return 1
-  fi
+	if [[ -z "$runs" ]]; then
+		echo "No recent GitHub Actions runs found."
+		return 1
+	fi
 
-  # Count number of runs
-  local count
-  count=$(echo "$runs" | wc -l)
+	# Count number of runs
+	local count
+	count=$(echo "$runs" | wc -l)
 
-  local selected_run
+	local selected_run
 
-  if [[ "$count" -eq 1 ]]; then
-    # Only one run
-    selected_run=$(echo "$runs" | awk '{print $1}')
-  else
-    # Multiple runs — use fzf if available, otherwise fallback to manual selection
-    if command -v fzf >/dev/null 2>&1; then
-      selected_run=$(echo "$runs" | fzf --prompt="Select GitHub Action: " | awk '{print $1}')
-    else
-      echo "Multiple runs found:"
-      select line in $runs; do
-        selected_run=$(echo "$line" | awk '{print $1}')
-        break
-      done
-    fi
-  fi
+	if [[ "$count" -eq 1 ]]; then
+		# Only one run
+		selected_run=$(echo "$runs" | awk '{print $1}')
+	else
+		# Multiple runs — use fzf if available, otherwise fallback to manual selection
+		if command -v fzf >/dev/null 2>&1; then
+			selected_run=$(echo "$runs" | fzf --prompt="Select GitHub Action: " | awk '{print $1}')
+		else
+			echo "Multiple runs found:"
+			select line in $runs; do
+				selected_run=$(echo "$line" | awk '{print $1}')
+				break
+			done
+		fi
+	fi
 
-  if [[ -n "$selected_run" ]]; then
-    echo "Showing logs for run ID: $selected_run"
-    gh run view "$selected_run" --log
-  else
-    echo "No run selected."
-    return 1
-  fi
+	if [[ -n "$selected_run" ]]; then
+		echo "Showing logs for run ID: $selected_run"
+		gh run view "$selected_run" --log
+	else
+		echo "No run selected."
+		return 1
+	fi
 }
 
 # VSCode aliases
@@ -488,12 +490,25 @@ fi;
 autoload -U +X bashcompinit && bashcompinit
 complete -o nospace -C /opt/homebrew/bin/terraform terraform
 
+# Vim / NeoVim / LazyVim
+alias nz="nvim"
+function nz {
+	project=$(z -e "$1")
+	if [ -z "$project" ]; then
+		echo "Path not found"
+		return 1
+	fi
+	log_and_run nvim "$project"
+}
+
+
+
 # Set .zsh_history max lines
 HISTSIZE=10000000
 SAVEHIST=10000000
 
-setopt EXTENDED_HISTORY     # Write the history file in the ":start:elapsed;command" format.
-setopt HIST_REDUCE_BLANKS   # Remove superfluous blanks from each command
+setopt EXTENDED_HISTORY		 # Write the history file in the ":start:elapsed;command" format.
+setopt HIST_REDUCE_BLANKS	 # Remove superfluous blanks from each command
 setopt no_hist_ignore_space # Do not ignore commands that start with a space
 
 
