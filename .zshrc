@@ -289,6 +289,16 @@ compdef _gr_complete gr
 function gl { # git log with pretty format
 	git log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) - %C(cyan)%ad %ar%C(reset)%C(auto)%d%C(reset)%n''					%C(white)%s%C(reset) %C(dim white)- %an%C(reset)' --date=format:'%a, %d %b %H:%M'
 }
+function gcb { # copy current branch name to clipboard
+	local branch
+	branch=$(git rev-parse --abbrev-ref HEAD) || return 1
+	if [ "$(uname -s)" = "Darwin" ]; then
+		echo -n "$branch" | pbcopy
+	else
+		echo -n "$branch" | xclip -selection clipboard
+	fi
+	echo "Copied: $branch"
+}
 
 
 ghlogs() {
