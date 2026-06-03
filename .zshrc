@@ -520,7 +520,58 @@ function nz {
 	log_and_run nvim "$project"
 }
 
+# gcloud google cloud gcp
+add_path /usr/local/google-cloud-sdk/bin
 
+export GITHUB_USERNAME=joppekoers
+export NUGET_AUTH_TOKEN=$(cat ~/git/dotfiles/nuget_token.txt)
+
+function cdb {
+	if [ $# -ne 1 ]; then
+		echo "Usage: cdb p|s|d|l"
+		return 1
+	fi
+
+    if [ "$1" = "l" ]; then
+		PGPASSWORD=postgres pgcli --prompt "local> " --auto-vertical-output --less-chatty -h localhost -p 5432 -U doadmin -d api-local
+		return
+	fi
+
+    case $1 in
+	p)
+		PORT=35432
+		DB_ENV=production
+		;;
+	s)
+		PORT=25432
+		DB_ENV=staging
+		;;
+	d)
+		PORT=15432
+		DB_ENV=dev
+		;;
+	*)
+		echo "Invalid environment: $1"
+		return 1
+		;;
+	esac
+
+
+	lsof -i tcp:$PORT -t | xargs kill -9
+	pkill -f db-tunnel.sh
+	pkill -f pgcli
+
+	echo "Connecting to $DB_ENV database on port $PORT..."
+	cd ~/git/celebratix/infra
+	./scripts/db-tunnel.sh $DB_ENV &
+	cd - > /dev/null
+
+	# try to connnect in a loop until successful, because the tunnel can take a few seconds to establish
+	until PGPASSWORD=$(gcloud auth print-access-token) pgcli --prompt "$DB_ENV> " --auto-vertical-output --less-chatty -h localhost -p $PORT -U "joppe@celebratix.io" -d api_db; do
+		echo "Waiting for database connection..."
+		sleep 0.5
+	done
+}
 
 # Set .zsh_history max lines
 HISTSIZE=10000000
