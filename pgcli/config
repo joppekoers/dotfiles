@@ -55,7 +55,7 @@ auto_expand = False
 auto_retry_closed_connection = True
 
 # If set to True, table suggestions will include a table alias
-generate_aliases = False
+generate_aliases = True
 
 # Path to a json file that specifies specific table aliases to use when generate_aliases is set to True
 # the format for this file should be:
