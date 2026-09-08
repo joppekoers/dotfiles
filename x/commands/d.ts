@@ -1,8 +1,8 @@
 // x d — connect to a Celebratix database
 
-import { $ } from "bun";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { $ } from "bun";
 
 export const description = "Connect to a Celebratix database (p|s|d|l)";
 
@@ -14,7 +14,8 @@ const ENVS = {
 	d: { name: "dev", port: 15432 },
 } as const;
 
-function pgcli(password: string, prompt: string, port: number, user: string, database: string): number {
+function pgcli(password: string, prompt: string, port: number, user: string, database: string) {
+	// prettier-ignore
 	const proc = Bun.spawnSync(
 		[
 			"pgcli",
@@ -36,7 +37,7 @@ function pgcli(password: string, prompt: string, port: number, user: string, dat
 	return proc.exitCode ?? 1;
 }
 
-export default async function run(args: string[]): Promise<number> {
+export default async function run(args: string[]) {
 	const env = args[0];
 	if (!env) {
 		console.error("Usage: x d p|s|d|l");

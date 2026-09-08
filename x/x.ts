@@ -8,15 +8,15 @@ import { join } from "node:path";
 
 const COMMANDS_DIR = join(import.meta.dir, "commands");
 
-async function usage(): Promise<number> {
-	console.error("Usage: x <command>");
-	console.error("");
-	console.error("Commands:");
+async function usage() {
+	console.log("Usage: x <command>");
+	console.log("");
+	console.log("Commands:");
 	for (const file of readdirSync(COMMANDS_DIR).sort()) {
 		if (!file.endsWith(".ts")) continue;
 		const name = file.slice(0, -".ts".length);
 		const mod = await import(join(COMMANDS_DIR, file));
-		console.error(`  ${name.padEnd(8)} ${mod.description ?? ""}`);
+		console.log(`  ${name.padEnd(8)} ${mod.description ?? ""}`);
 	}
 	return 1;
 }
