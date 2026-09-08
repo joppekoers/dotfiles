@@ -43,7 +43,11 @@ export default async function run(args: string[]): Promise<number> {
 	console.log(`${TUNNEL} -> mitmweb :${PROXY_PORT} -> localhost:${port}`);
 	const webUrl = `http://localhost:${WEB_PORT}/?token=${WEB_PASSWORD}`;
 	// OSC 8 hyperlink so the terminal makes it clickable
-	console.log(process.stdout.isTTY ? `Inspect requests at \x1b]8;;${webUrl}\x07${webUrl}\x1b]8;;\x07` : `Inspect requests at ${webUrl}`);
+	console.log(
+		process.stdout.isTTY
+			? `Inspect requests at \x1b]8;;${webUrl}\x07${webUrl}\x1b]8;;\x07`
+			: `Inspect requests at ${webUrl}`,
+	);
 
 	// prettier-ignore
 	const mitm = Bun.spawn(
@@ -64,10 +68,13 @@ export default async function run(args: string[]): Promise<number> {
 
 	await waitForPort(PROXY_PORT);
 
-	const tunnel = Bun.spawn(["cloudflared", "tunnel", "--loglevel", "error", "run", "--url", `http://localhost:${PROXY_PORT}`, TUNNEL], {
-		stdout: "inherit",
-		stderr: "inherit",
-	});
+	const tunnel = Bun.spawn(
+		["cloudflared", "tunnel", "--loglevel", "error", "run", "--url", `http://localhost:${PROXY_PORT}`, TUNNEL],
+		{
+			stdout: "inherit",
+			stderr: "inherit",
+		},
+	);
 
 	const stop = () => {
 		tunnel.kill();

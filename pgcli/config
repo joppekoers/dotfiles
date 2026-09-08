@@ -31,7 +31,7 @@ multi_line_mode = psql
 # "shutdown", "delete", or "update".
 # You can pass a list of destructive commands or leave it empty if you want to skip all warnings.
 # "unconditional_update" will warn you of update statements that don't have a where clause
-destructive_warning = drop, shutdown, delete, truncate, alter, unconditional_update
+destructive_warning =
 
 # When `destructive_warning` is on and the user declines to proceed with a
 # destructive statement, the current transaction (if any) is left untouched,
@@ -155,6 +155,10 @@ max_field_width = 500
 
 # Skip intro on startup and goodbye on exit
 less_chatty = True
+
+# Show timestamps in the server time zone (UTC) instead of converting to local time,
+# also silences the "Using local time zone" startup message
+use_local_timezone = False
 
 # Show all Postgres error fields (as listed in
 # https://www.postgresql.org/docs/current/protocol-error-fields.html).
