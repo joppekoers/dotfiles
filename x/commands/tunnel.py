@@ -1,6 +1,7 @@
 # mitmproxy addon loaded by `x tunnel`: logs every proxied request to the terminal,
 # with request/response bodies pretty-printed and syntax highlighted when they are JSON.
 import json
+from datetime import datetime
 
 from mitmproxy import http
 
@@ -55,7 +56,9 @@ def pretty_json(message: http.Message) -> str | None:
 def response(flow: http.HTTPFlow) -> None:
     req, res = flow.request, flow.response
     assert res is not None
-    lines = [f"\n{BOLD}{req.method} {req.path}{RESET} {DIM}->{RESET} {res.status_code}"]
+    now = datetime.now()
+    ts = f"{now:%H:%M:%S}.{now.microsecond // 1000:03d}"
+    lines = [f"\n{DIM}{ts}{RESET} {BOLD}{req.method} {req.path}{RESET} {DIM}->{RESET} {res.status_code}"]
     if body := pretty_json(req):
         lines.append(f"{DIM}>> request{RESET}\n{body}")
     if body := pretty_json(res):
