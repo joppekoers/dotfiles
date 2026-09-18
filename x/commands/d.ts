@@ -30,13 +30,43 @@ const DBS = {
 	cep: { port: 5436, name: "engagement_db", local: "cep-local" },
 } as const;
 
+// platform-cli refuses to open a tunnel when `gcloud auth print-identity-token` fails,
+// so run the login it would otherwise tell us to run instead of bailing out.
+async function ensureAuth(): Promise<boolean> {
+	const authed = async () => (await $`gcloud auth print-identity-token`.nothrow().quiet()).exitCode === 0;
+	if (await authed()) return true;
+
+	console.log("Not authenticated with gcloud, logging in...");
+	const login = Bun.spawnSync(["gcloud", "auth", "login", "--update-adc"], {
+		stdin: "inherit",
+		stdout: "inherit",
+		stderr: "inherit",
+	});
+	return login.exitCode === 0 && (await authed());
+}
+
+// 127.0.0.1 rather than localhost: platform-cli decides a port is taken by dialling
+// 127.0.0.1, so probing the same address keeps both sides in agreement.
 async function portOpen(port: number): Promise<boolean> {
+	const connect = Bun.connect({ hostname: "127.0.0.1", port, socket: { data() {} } });
+	// A connect that hangs is as good as a closed port here; don't wait forever for it.
+	let timer: ReturnType<typeof setTimeout>;
+	const timeout = new Promise<null>((resolve) => {
+		timer = setTimeout(() => resolve(null), 500);
+	});
 	try {
-		const socket = await Bun.connect({ hostname: "localhost", port, socket: { data() {} } });
+		const socket = await Promise.race([connect, timeout]);
+		if (!socket) {
+			// Still dangling: hand it a no-op catch so a later failure isn't unhandled.
+			void connect.then((s) => s.end()).catch(() => {});
+			return false;
+		}
 		socket.end();
 		return true;
 	} catch {
 		return false;
+	} finally {
+		clearTimeout(timer!);
 	}
 }
 
@@ -83,6 +113,11 @@ export default async function run(args: string[]) {
 	}
 	if (dbName === "api_ro" && env !== "p") {
 		console.error("The read replica only exists in production");
+		return 1;
+	}
+
+	if (!(await ensureAuth())) {
+		console.error("gcloud login failed");
 		return 1;
 	}
 
