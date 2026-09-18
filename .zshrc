@@ -525,7 +525,8 @@ function nz {
 add_path /usr/local/google-cloud-sdk/bin
 
 export GITHUB_USERNAME=joppekoers
-export NUGET_AUTH_TOKEN=$(cat ~/git/dotfiles/nuget_token.txt)
+# Secrets live in ~/git/dotfiles/.env, committed encrypted as .env.enc (scripts/envcrypt.sh unlock)
+[ -f ~/git/dotfiles/.env ] && set -a && source ~/git/dotfiles/.env && set +a
 
 # x — Celebratix helper CLI (dotfiles/x/x.ts)
 alias x="bun run ~/git/dotfiles/x/x.ts"
@@ -540,11 +541,9 @@ setopt no_hist_ignore_space # Do not ignore commands that start with a space
 
 add_path "$HOME/.local/share/mise/shims"
 
-export CLOUDFLARE_API_TOKEN=
-
 # format html with curl ... | fmthtml
 function fmthtml {
-	tidy -indent -quiet --show-warnings no | bat
+	sed 's/></>\n</g' | bat -l html
 }
 # De duplicating paths inside $PATH https://www.linuxjournal.com/content/removing-duplicate-path-entries
 export PATH=$(echo $PATH | awk -v RS=: -v ORS=: '!($0 in a) {a[$0]; print $0}' | sed 's/:$//')
