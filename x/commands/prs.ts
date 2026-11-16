@@ -20,6 +20,7 @@ query ($endCursor: String) {
 				url
 				isDraft
 				reviewDecision
+					latestOpinionatedReviews(first: 20) { nodes { state } }
 				commits(last: 1) { nodes { commit { statusCheckRollup { state } } } }
 			}
 		}
@@ -33,6 +34,7 @@ type PrNode = {
 	url: string;
 	isDraft: boolean;
 	reviewDecision: "APPROVED" | "CHANGES_REQUESTED" | "REVIEW_REQUIRED" | null;
+	latestOpinionatedReviews?: { nodes: { state: string }[] };
 	commits: { nodes: { commit: { statusCheckRollup: { state: string } | null } }[] };
 };
 
@@ -52,9 +54,19 @@ function ciStatus(pr: PrNode) {
 	}
 }
 
+// reviewDecision is null when GitHub does not compute one for the PR (e.g. no required
+// reviews in the branch rules), even if a reviewer approved; derive it from the reviews then
+function reviewDecision(pr: PrNode) {
+	if (pr.reviewDecision) return pr.reviewDecision;
+	const states = pr.latestOpinionatedReviews?.nodes.map((review) => review.state) ?? [];
+	if (states.includes("CHANGES_REQUESTED")) return "CHANGES_REQUESTED";
+	if (states.includes("APPROVED")) return "APPROVED";
+	return null;
+}
+
 function reviewStatus(pr: PrNode) {
 	if (pr.isDraft) return "draft";
-	switch (pr.reviewDecision) {
+	switch (reviewDecision(pr)) {
 		case "APPROVED":
 			return "approved";
 		case "CHANGES_REQUESTED":
@@ -67,13 +79,12 @@ function reviewStatus(pr: PrNode) {
 }
 
 function title(pr: PrNode) {
-	const title = pr.title
+	return pr.title
 		.replace(/\(?CB-\d+\)?/i, "")
 		.replace(/feat:/, "")
 		.replace(/feature:/, "")
 		.replace(/fix:/, "")
 		.trim();
-	return title.length > TITLE_WIDTH ? `${title.slice(0, TITLE_WIDTH - 1)}…` : title;
 }
 
 async function fetchPrs() {
@@ -86,8 +97,6 @@ async function fetchPrs() {
 function repoName(pr: PrNode) {
 	return pr.repository.name.replace(/^celebratix-/, "");
 }
-
-const TITLE_WIDTH = 60;
 
 type Cell = { text: string; url?: string; pipedText?: string };
 
@@ -120,12 +129,26 @@ function render(prs: PrNode[]) {
 	]);
 	rows.unshift([{ text: "REPO" }, { text: "CI" }, { text: "REVIEW" }, { text: "LINK" }, { text: "TITLE" }]);
 
+	const separator = "  ";
 	const widths = rows[0]!.map((_, col) => Math.max(...rows.map((row) => cellText(row[col]!).length)));
+
+	// Truncate the last column (title) to the space left so rows never wrap in the terminal
+	if (isTTY && process.stdout.columns) {
+		const last = widths.length - 1;
+		const fixedWidth = widths.slice(0, last).reduce((sum, width) => sum + width + separator.length, 0);
+		const maxTitle = Math.max(process.stdout.columns - fixedWidth, 1);
+		for (const row of rows) {
+			const cell = row[last]!;
+			if (cell.text.length > maxTitle) cell.text = `${cell.text.slice(0, maxTitle - 1)}…`;
+		}
+		widths[last] = Math.min(widths[last]!, maxTitle);
+	}
+
 	for (const row of rows) {
 		console.log(
 			row
 				.map((cell, col) => renderCell(cell, widths[col]!))
-				.join("  ")
+				.join(separator)
 				.trimEnd(),
 		);
 	}
