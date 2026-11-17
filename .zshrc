@@ -415,7 +415,9 @@ function loop {
 	done
 }
 
-export DOCKER_HOST=unix://$HOME/.orbstack/run/docker.sock
+if [ "$(uname -s)" = "Darwin" ]; then
+	export DOCKER_HOST=unix://$HOME/.orbstack/run/docker.sock
+fi
 function drs {
 	log_and_run "docker stop $1; docker start $1; docker logs -f -n 10000 $1"
 }
