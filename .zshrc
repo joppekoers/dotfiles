@@ -541,6 +541,7 @@ setopt HIST_REDUCE_BLANKS	 # Remove superfluous blanks from each command
 setopt no_hist_ignore_space # Do not ignore commands that start with a space
 
 add_path "$HOME/.local/share/mise/shims"
+add_path "/opt/homebrew/opt/curl/bin"
 
 # format html with curl ... | fmthtml
 function fmthtml {
