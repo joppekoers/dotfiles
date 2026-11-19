@@ -415,7 +415,9 @@ function loop {
 	done
 }
 
-export DOCKER_HOST=unix://$HOME/.orbstack/run/docker.sock
+if [ "$(uname -s)" = "Darwin" ]; then
+	export DOCKER_HOST=unix://$HOME/.orbstack/run/docker.sock
+fi
 function drs {
 	log_and_run "docker stop $1; docker start $1; docker logs -f -n 10000 $1"
 }
@@ -549,3 +551,5 @@ function fmthtml {
 }
 # De duplicating paths inside $PATH https://www.linuxjournal.com/content/removing-duplicate-path-entries
 export PATH=$(echo $PATH | awk -v RS=: -v ORS=: '!($0 in a) {a[$0]; print $0}' | sed 's/:$//')
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
